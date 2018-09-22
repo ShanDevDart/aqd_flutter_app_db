@@ -1,0 +1,6 @@
+database:
+ username: flutter_app_admin
+ password: admin4me
+ host: localhost
+ port: 5432
+ databaseName: flutter_app
