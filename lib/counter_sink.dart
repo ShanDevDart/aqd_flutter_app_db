@@ -42,8 +42,14 @@ class CounterSink extends ApplicationChannel {
     /* OAuth 2.0 Resource Owner Grant Endpoint */
     router.route("/auth/token").link(() => AuthController(authServer));
 
-    router.route("/example").linkFunction((request) async {
-      return new Response.ok({"key": "Hello World"});
+    router.route("/tzinfo").linkFunction((request) async {
+      var now = new DateTime.now();
+      return new Response.ok({"tzinfo": "TZ Name : " + now.timeZoneName.toString() + ", TZ Offset : " + now.timeZoneOffset.toString() + ", Time : " + now.hour.toString() + ":" + now.minute.toString() +":"+ now.second.toString()});
+    });
+
+    router.route("/time").linkFunction((request) async {
+      var now = new DateTime.now();
+      return new Response.ok({"time": now.hour.toString() + ":" + now.minute.toString() +":"+ now.second.toString()});
     });
 
     /* Gold price generator */
