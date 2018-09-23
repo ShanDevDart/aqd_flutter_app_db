@@ -2,11 +2,11 @@ import '../counter.dart';
 import '../model/user.dart';
 
 class RegisterController extends QueryController<User> {
-  RegisterController(this.authServer);
+  RegisterController(ManagedContext context, this.authServer) : super(context);
 
-  AuthServer authServer;
+  final AuthServer authServer;
 
-  @httpPost
+  @Operation.post()
   Future<Response> createUser() async {
     if (query.values.username == null || query.values.password == null) {
       return new Response.badRequest(

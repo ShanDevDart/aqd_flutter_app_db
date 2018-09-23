@@ -2,32 +2,34 @@ import '../counter.dart';
 import '../model/counter.dart';
 import '../model/user.dart';
 
-class CounterController extends HTTPController {
-  CounterController(this.authServer);
+class CounterController extends ResourceController {
+  CounterController(this.context, this.authServer);
 
-  AuthServer authServer;
+  final AuthServer authServer;
+  final ManagedContext context;
 
-  @httpGet
+/*
+  @Operation.get()
   Future<Response> getCounters(
-      {@HTTPQuery("created_after") DateTime createdAfter}) async {
+      {@Bind.query("created_after") DateTime createdAfter}) async {
     print('Inside GetCounters route');
-    var query = new Query<Counter>()
-      ..where.owner.id =
-          whereEqualTo(request.authorization.resourceOwnerIdentifier);
+    var query = Query<Counter>(context)
+..where((n) => n.owner).identifiedBy(request.authorization.ownerID);
 
     if (createdAfter != null) {
-      query.where.createdAt = whereGreaterThan(createdAfter);
+      query.where((n) => n.createdAt).greaterThan(createdAfter);
     }
 
     return new Response.ok(await query.fetch());
   }
-
-  @httpGet
+*/
+  @Operation.get()
   Future<Response> getCounter() async {
     print('Inside GetCounter route');
-    var requestingUserID = request.authorization.resourceOwnerIdentifier;
-    var query = new Query<Counter>()
-      ..where.owner.id = whereEqualTo(requestingUserID);
+    var requestingUserID = request.authorization.ownerID;
+    var query = new Query<Counter>(context)
+      ..where((n) => n.owner).identifiedBy(requestingUserID);
+      //..where.owner.id = whereEqualTo(requestingUserID);
 
     var c = await query.fetchOne();
     if (c == null) {
@@ -37,6 +39,7 @@ class CounterController extends HTTPController {
     return new Response.ok(c);
   }
 
+/*
   @httpPost
   Future<Response> createCounter(@HTTPBody() Counter counter) async {
     print('Inside createCounter route');
@@ -47,7 +50,17 @@ class CounterController extends HTTPController {
 
     return new Response.ok(await query.insert());
   }
+*/
 
+@Operation.post()
+  Future<Response> createNote(@Bind.body() Counter counter) async {
+    counter.owner = new User()
+      ..id = request.authorization.ownerID;
+
+    return Response.ok(await Query.insertObject(context, counter));
+}
+
+/*
   @httpPut
   Future<Response> updateCounter(
       @HTTPBody() Counter counter) async {
@@ -64,7 +77,24 @@ class CounterController extends HTTPController {
 
     return new Response.ok(u);
   }
+*/
 
+@Operation.put()
+  Future<Response> updateNote(@Bind.body() Counter counter) async {
+    var requestingUserID = request.authorization.ownerID;
+    var query = Query<Counter>(context)
+      ..where((n) => n.owner).identifiedBy(requestingUserID)
+      ..values = counter;
+
+    var u = await query.updateOne();
+    if (u == null) {
+      return Response.notFound();
+    }
+
+    return Response.ok(u);
+}
+
+/*
   @httpDelete
   Future<Response> deleteCounter(@HTTPPath("id") int id) async {
     print('Inside deleteCounter route');
@@ -79,4 +109,17 @@ class CounterController extends HTTPController {
 
     return new Response.notFound();
   }
+  */
+  @Operation.delete()
+  Future<Response> deleteNote() async {
+    var requestingUserID = request.authorization.ownerID;
+    var query = Query<Counter>(context)
+      ..where((n) => n.owner).identifiedBy(requestingUserID);
+
+    if (await query.delete() > 0) {
+      return Response.ok(null);
+    }
+
+    return Response.notFound();
+}
 }

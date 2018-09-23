@@ -1,8 +1,9 @@
 import '../counter.dart';
 import 'package:http/http.dart' as http;
 
-class GoldPriceController extends HTTPController {
-  @httpGet // HTTPMethod meta data
+class GoldPriceController extends ResourceController {
+
+  @Operation.get()
   Future<Response> getGoldPrice() async {
     http.Response response = await http.get('http://www.goldseek.com/');
 

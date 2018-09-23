@@ -20,64 +20,58 @@ aqueduct auth add-client --id com.dart.demo --secret abcd --connect postgres://t
 aqueduct serve --port 8082
  */
 
-class CounterSink extends RequestSink {
-  CounterSink(ApplicationConfiguration appConfig) : super(appConfig) {
-    logger.onRecord.listen((rec) => print("$rec ${rec.error ?? ""} ${rec.stackTrace ?? ""}"));
-
-    var options = new TodoConfiguration(appConfig.configurationFilePath);
-
-    ManagedContext.defaultContext = contextWithConnectionInfo(options.database);
-
-    var authStorage = new ManagedAuthStorage<User>(ManagedContext.defaultContext);
-    authServer = new AuthServer(authStorage);
-  }
-
+class CounterSink extends ApplicationChannel {
+  ManagedContext context;
   AuthServer authServer;
 
-  static Future initializeApplication(ApplicationConfiguration appConfig) async {
-    if (appConfig.configurationFilePath == null) {
-      throw new ApplicationStartupException(
-          "No configuration file found. See README.md.");
-    }
+  @override
+  Future prepare() async {
+    logger.onRecord.listen(
+        (rec) => print("$rec ${rec.error ?? ""} ${rec.stackTrace ?? ""}"));
+
+    final config = CounterConfiguration(options.configurationFilePath);
+    context = contextWithConnectionInfo(config.database);
+
+    authServer = AuthServer(ManagedAuthDelegate<User>(context));
   }
 
   @override
-  void setupRouter(Router router) {
+  Controller get entryPoint {
+    final router = Router();
+
     /* OAuth 2.0 Resource Owner Grant Endpoint */
-    router.route("/auth/token").generate(() => new AuthController(authServer));
-    
-    router
-      .route("/example")
-      .listen((request) async {
-        return new Response.ok({"key": "Hello World"});
-      });
+    router.route("/auth/token").link(() => AuthController(authServer));
+
+    router.route("/example").linkFunction((request) async {
+      return new Response.ok({"key": "Hello World"});
+    });
 
     /* Gold price generator */
-    router
-        .route("/gold")
-        .generate(() => new GoldPriceController());
+    router.route("/gold").link(() => GoldPriceController());
 
     /* Create an account */
     router
         .route("/register")
-        .pipe(new Authorizer.basic(authServer))
-        .generate(() => new RegisterController(authServer));
+        .link(() => Authorizer.basic(authServer))
+        .link(() => RegisterController(context, authServer));
 
     /* Gets profile for user with bearer token */
     router
         .route("/me")
-        .pipe(new Authorizer.bearer(authServer))
-        .generate(() => new IdentityController());
+        .link(() => Authorizer.bearer(authServer))
+        .link(() => IdentityController(context));
 
     /* Creates, updates, deletes and gets notes */
     router
         .route("/counter")
-        .pipe(new Authorizer(authServer))
-        .generate(() => new CounterController(authServer));
+        .link(() => Authorizer(authServer))
+        .link(() => new CounterController(context,authServer));
 
-    router
+router
       .route("/*")
-      .pipe(new ReroutingFileController("web"));
+.link(() => ReroutingFileController("web"));
+
+    return router;
   }
 
   /*
@@ -85,7 +79,7 @@ class CounterSink extends RequestSink {
    */
 
   ManagedContext contextWithConnectionInfo(
-      DatabaseConnectionConfiguration connectionInfo) {
+      DatabaseConfiguration connectionInfo) {
     var dataModel = new ManagedDataModel.fromCurrentMirrorSystem();
     var psc = new PostgreSQLPersistentStore.fromConnectionInfo(
         connectionInfo.username,
@@ -101,34 +95,38 @@ class CounterSink extends RequestSink {
    * Overrides
    */
 
+/*
   @override
   Map<String, APISecurityScheme> documentSecuritySchemes(
       PackagePathResolver resolver) {
     return authServer.documentSecuritySchemes(resolver);
   }
+  */
 }
 
-class TodoConfiguration extends ConfigurationItem {
-  TodoConfiguration(String fileName) : super.fromFile(fileName);
+class CounterConfiguration extends Configuration {
+  CounterConfiguration(String fileName) : super.fromFile(File(fileName));
 
-  DatabaseConnectionConfiguration database;
+  DatabaseConfiguration database;
 }
 
-
-class ReroutingFileController extends HTTPFileController {
+class ReroutingFileController extends FileController {
   ReroutingFileController(String directory) : super(directory);
 
   @override
-  Future<RequestOrResponse> processRequest(Request req) async {
-    Response potentialResponse = await super.processRequest(req);
-    var acceptsHTML = req.innerRequest
-        .headers.value(HttpHeaders.ACCEPT).contains("text/html");
+  Future<RequestOrResponse> handle(Request req) async {
+    Response potentialResponse = await super.handle(req);
+    var acceptsHTML =
+        req.raw.headers.value(HttpHeaders.acceptHeader).contains("text/html");
 
-    if (potentialResponse.statusCode == 404 && acceptsHTML)  {
-        return new Response(302, {
-          HttpHeaders.LOCATION: "/",
-          "X-JS-Route": req.path.remainingPath
-        }, null);
+    if (potentialResponse.statusCode == 404 && acceptsHTML) {
+      return new Response(
+          302,
+          {
+            HttpHeaders.locationHeader: "/",
+            "X-JS-Route": req.path.remainingPath
+          },
+          null);
     }
 
     return potentialResponse;

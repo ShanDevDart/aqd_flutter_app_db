@@ -15,17 +15,17 @@ class Counter extends ManagedObject<_Counter> implements _Counter {
 }
 
 class _Counter {
-  @managedPrimaryKey
+  @primaryKey
   int id;
 
   int counter;
 
-  @ManagedColumnAttributes(indexed: true)
+  @Column(indexed: true)
   DateTime createdAt;
 
-  @ManagedColumnAttributes(indexed: true)
+  @Column(indexed: true)
   DateTime updatedAt;
 
-  @ManagedRelationship(#counter, onDelete: ManagedRelationshipDeleteRule.cascade, isRequired: true)
+  @Relate(#counter, onDelete: DeleteRule.cascade, isRequired: true)
   User owner;
 }
