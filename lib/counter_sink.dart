@@ -3,7 +3,7 @@ import 'counter.dart';
 import 'controller/identity_controller.dart';
 import 'controller/register_controller.dart';
 import 'controller/counter_controller.dart';
-import 'controller/goldPrice_controller.dart';
+import 'controller/priceQuotes_controller.dart';
 import 'model/user.dart';
 
 /*
@@ -53,7 +53,7 @@ class CounterSink extends ApplicationChannel {
     });
 
     /* Gold price generator */
-    router.route("/gold").link(() => GoldPriceController());
+    router.route("/getpq/:productType").link(() => PriceQuotesController());
 
     /* Create an account */
     router
