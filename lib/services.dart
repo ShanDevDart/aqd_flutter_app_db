@@ -1,12 +1,21 @@
+import './counter.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import './model/pm.dart';
+import './model/commodities_others.dart';
 
 class HttpQuotesServices {
-  Future<Map> getMetalPrice(String typeOfProduct) async {
-    RegExp productPriceSectionRE, actualPriceRE, shortTimeRE, longTimeRE;
+  Future<ManagedObject> getMetalPriceValues(String typeOfProduct) async {
+    RegExp productPriceSectionRE,
+        actualPriceRE,
+        shortTimeRE,
+        longTimeRE,
+        yrHighPriceSectionRE,
+        yrLowPriceSectionRE;
 
     int i = 0;
     Map priceMap;
+    ManagedObject managedObjectValues;
 
     String currentPrice,
         bidPrice,
@@ -27,23 +36,35 @@ class HttpQuotesServices {
     http.Response response;
 
     Iterable<Match> priceMatches;
+    Match productPriceSectionMatches;
 
     productPriceSectionRE = new RegExp(
       r'<div id="quotes_summary_current_data"[\s\S]+?<div class="float_lang_base_2',
       caseSensitive: false,
     );
 
-    if (typeOfProduct == 'Gold' || typeOfProduct == 'Silver') {
-      response = await http.get('http://www.goldseek.com/');
-      typeOfProduct == 'Gold'
-          ? productPriceSectionRE = new RegExp(
-              r'Live Gold Price[\s\S]+?</html>',
-              caseSensitive: false,
-            )
-          : productPriceSectionRE = new RegExp(
-              r'Live Silver Price[\s\S]+?</html>',
-              caseSensitive: false,
-            );
+    if (typeOfProduct == 'Gold') {
+      response = await http.get('https://www.kitco.com/');
+
+      //response = await http.get('http://www.goldseek.com/');
+
+      //Live Gold Price[\s\S]+?</html>
+      productPriceSectionRE = new RegExp(
+        r'\<\!\-\- LIVE SPOT GOLD \-\-\>[\s\S]+?\<\!\-\- SILVER \& PGMS \-\-\>',
+        caseSensitive: false,
+      );
+    }
+
+    if (typeOfProduct == 'Silver') {
+      response = await http.get('http://www.kitcosilver.com/');
+
+      //response = await http.get('http://www.goldseek.com/');
+
+      //Live Silver Price[\s\S]+?</html>
+      productPriceSectionRE = new RegExp(
+        r'Live Spot Silver Price[\s\S]+?\<\!\-\- BEGIN KITCO 10am FIX \-\-\>',
+        caseSensitive: false,
+      );
     }
 
     if (typeOfProduct == 'BitCoin') {
@@ -65,11 +86,11 @@ class HttpQuotesServices {
       caseSensitive: false,
     );
 
-    Match productPriceSectionMatches =
-        productPriceSectionRE.firstMatch(response.body);
+    productPriceSectionMatches = productPriceSectionRE.firstMatch(response.body);
 
-    priceMatches =
-        actualPriceRE.allMatches(productPriceSectionMatches.group(0));
+    //print(productPriceSectionMatches.group(0));
+
+    priceMatches = actualPriceRE.allMatches(productPriceSectionMatches.group(0));
 
     if (typeOfProduct == 'Gold' || typeOfProduct == 'Silver') {
       longTimeRE = new RegExp(r"\S\S\S \d\d, \d\d\d\d \d\d:\d\d:\d\d E\ST");
@@ -114,6 +135,25 @@ class HttpQuotesServices {
         }
         i++;
       }
+      response = await http
+          .get('https://www.bullionbypost.co.uk/gold-price/year/ounces/USD/');
+
+      yrHighPriceSectionRE = new RegExp(
+        r'Year High\"[\s\S]+?</span></td>',
+        caseSensitive: false,
+      );
+
+      actualPriceRE = new RegExp(
+        r"[\+|\-|\$]*[\d\,]*\d+\.\d{1,2}[\%]*",
+        caseSensitive: false,
+      );
+
+      productPriceSectionMatches = yrHighPriceSectionRE.firstMatch(response.body);
+
+      //print(productPriceSectionMatches.group(0));
+
+      priceMatches =
+          actualPriceRE.allMatches(productPriceSectionMatches.group(0));
 
       priceMap = {
         "bidask": "$bidPrice | $askPrice",
@@ -121,12 +161,30 @@ class HttpQuotesServices {
         "change": "$changeValue | $changePercentage",
         "1month": "$month1ChangeValue | $month1ChangePercentage",
         "1year": "$year1ChangeValue | $year1ChangePercentage",
-        "yearlowhigh": "$year1LowPrice | $year1HighPrice",
-        "time" : "$longTime",
+        "yearlowhigh": "$year1ChangeValue | $year1ChangeValue",
+        "time": "$year1ChangeValue",
       };
+
+      managedObjectValues = PMQuotes()
+        ..pmtype = typeOfProduct
+        ..bid = bidPrice
+        ..ask = askPrice
+        ..low = lowPrice
+        ..high = highPrice
+        ..changeValue = changeValue
+        ..changePercentage = changePercentage
+        ..month1ChangeValue = month1ChangeValue
+        ..month1ChangePercentage = month1ChangePercentage
+        ..year1ChangeValue = year1ChangeValue
+        ..year1ChangePercentage = year1ChangePercentage
+        ..year1LowPrice = year1ChangeValue
+        ..year1HighPrice = year1ChangeValue
+        ..longTime = year1ChangeValue
+        ..quoteJson = Document(priceMap);
     } else {
       shortTimeRE = new RegExp(r"\d\d:\d\d:\d\d");
-      shortTime = shortTimeRE.firstMatch(productPriceSectionMatches.group(0))?.group(0);
+      shortTime =
+          shortTimeRE.firstMatch(productPriceSectionMatches.group(0))?.group(0);
       //shortTime = tmpShortTime.group(0);
 
       for (Match price in priceMatches) {
@@ -152,8 +210,18 @@ class HttpQuotesServices {
         "price": "$currentPrice",
         "change": "$changeValue | $changePercentage",
         "lowhigh": "$lowPrice | $highPrice",
-        "time" : "$shortTime",
+        "time": "$shortTime",
       };
+
+      managedObjectValues = CommoditiesOthers()
+        ..commoditytype = typeOfProduct
+        ..price = currentPrice
+        ..changeValue = changeValue
+        ..changePercentage = changePercentage
+        ..lowPrice = lowPrice
+        ..highPrice = highPrice
+        ..shortTime = shortTime
+        ..quoteJson = Document(priceMap);
     }
 /*
     if (typeOfProduct == 'Gold' || typeOfProduct == 'Silver') {
@@ -171,6 +239,6 @@ class HttpQuotesServices {
       print("Time : $shortTime");
     }
 */
-    return priceMap;
+    return managedObjectValues;
   }
 }
