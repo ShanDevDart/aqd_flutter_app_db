@@ -86,15 +86,26 @@ class HttpQuotesServices {
       caseSensitive: false,
     );
 
-    productPriceSectionMatches = productPriceSectionRE.firstMatch(response.body);
+    productPriceSectionMatches =
+        productPriceSectionRE.firstMatch(response.body);
 
     //print(productPriceSectionMatches.group(0));
 
-    priceMatches = actualPriceRE.allMatches(productPriceSectionMatches.group(0));
+    priceMatches =
+        actualPriceRE.allMatches(productPriceSectionMatches.group(0));
 
     if (typeOfProduct == 'Gold' || typeOfProduct == 'Silver') {
-      longTimeRE = new RegExp(r"\S\S\S \d\d, \d\d\d\d \d\d:\d\d:\d\d E\ST");
-      longTime = longTimeRE.firstMatch(productPriceSectionMatches.group(0))?.group(0);
+      if (typeOfProduct == 'Gold') {
+        longTime = 'None';
+      } else {
+        longTimeRE = new RegExp(r"\w{3}\s+\d+\s+\d{4}\s+\d+:\d{2}\s*[A|P]M");
+        longTime = longTimeRE
+            .firstMatch(productPriceSectionMatches.group(0))
+            ?.group(0);
+      }
+
+      //longTimeRE = new RegExp(r"\S\S\S \d\d, \d\d\d\d \d\d:\d\d:\d\d E\ST");
+      //longTime = longTimeRE.firstMatch(productPriceSectionMatches.group(0))?.group(0);
 
       for (Match price in priceMatches) {
         if (i == 0) {
@@ -135,25 +146,37 @@ class HttpQuotesServices {
         }
         i++;
       }
-      response = await http
-          .get('https://www.bullionbypost.co.uk/gold-price/year/ounces/USD/');
+      if (typeOfProduct == 'Gold') {
+        response = await http
+            .get('https://www.bullionbypost.co.uk/gold-price/year/ounces/USD/');
+      } else {
+        response = await http
+            .get('https://www.bullionbypost.co.uk/silver-price/year/ounces/USD/');
+      }
 
       yrHighPriceSectionRE = new RegExp(
         r'Year High\"[\s\S]+?</span></td>',
         caseSensitive: false,
       );
 
-      actualPriceRE = new RegExp(
-        r"[\+|\-|\$]*[\d\,]*\d+\.\d{1,2}[\%]*",
+      yrLowPriceSectionRE = new RegExp(
+        r'Year Low\"[\s\S]+?</span></td>',
         caseSensitive: false,
       );
 
-      productPriceSectionMatches = yrHighPriceSectionRE.firstMatch(response.body);
+      productPriceSectionMatches =
+          yrHighPriceSectionRE.firstMatch(response.body);
 
-      //print(productPriceSectionMatches.group(0));
+      year1HighPrice = actualPriceRE
+          .firstMatch(productPriceSectionMatches.group(0))
+          ?.group(0);
 
-      priceMatches =
-          actualPriceRE.allMatches(productPriceSectionMatches.group(0));
+      productPriceSectionMatches =
+          yrLowPriceSectionRE.firstMatch(response.body);
+
+      year1LowPrice = actualPriceRE
+          .firstMatch(productPriceSectionMatches.group(0))
+          ?.group(0);
 
       priceMap = {
         "bidask": "$bidPrice | $askPrice",
@@ -161,8 +184,8 @@ class HttpQuotesServices {
         "change": "$changeValue | $changePercentage",
         "1month": "$month1ChangeValue | $month1ChangePercentage",
         "1year": "$year1ChangeValue | $year1ChangePercentage",
-        "yearlowhigh": "$year1ChangeValue | $year1ChangeValue",
-        "time": "$year1ChangeValue",
+        "yearlowhigh": "$year1LowPrice | $year1HighPrice",
+        "time": "$longTime",
       };
 
       managedObjectValues = PMQuotes()
@@ -177,9 +200,9 @@ class HttpQuotesServices {
         ..month1ChangePercentage = month1ChangePercentage
         ..year1ChangeValue = year1ChangeValue
         ..year1ChangePercentage = year1ChangePercentage
-        ..year1LowPrice = year1ChangeValue
-        ..year1HighPrice = year1ChangeValue
-        ..longTime = year1ChangeValue
+        ..year1LowPrice = year1LowPrice
+        ..year1HighPrice = year1HighPrice
+        ..longTime = longTime
         ..quoteJson = Document(priceMap);
     } else {
       shortTimeRE = new RegExp(r"\d\d:\d\d:\d\d");
