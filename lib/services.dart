@@ -205,10 +205,14 @@ class HttpQuotesServices {
         ..longTime = longTime
         ..quoteJson = Document(priceMap);
     } else {
-      shortTimeRE = new RegExp(r"\d\d:\d\d:\d\d");
-      shortTime =
-          shortTimeRE.firstMatch(productPriceSectionMatches.group(0))?.group(0);
+      //shortTimeRE = new RegExp(r"\d\d:\d\d:\d\d");
+      //shortTime = shortTimeRE.firstMatch(productPriceSectionMatches.group(0))?.group(0);
       //shortTime = tmpShortTime.group(0);
+
+      //if (shortTime == null) {
+        DateTime timeNow = new DateTime.now();
+        shortTime = "${timeNow.hour}:${timeNow.minute}"; 
+      //}      
 
       for (Match price in priceMatches) {
         if (i == 0) {
