@@ -67,6 +67,8 @@ class HttpQuotesServices {
       );
     }
 
+    //The above `productPriceSectionRE` Regex will extract the section of text that we want to parse from the HTML content
+
     if (typeOfProduct == 'BitCoin') {
       response =
           await http.get('https://www.investing.com/crypto/bitcoin/btc-usd');
@@ -81,16 +83,19 @@ class HttpQuotesServices {
       response = await http.get('https://www.investing.com/indices/usdollar');
     }
 
+    //This `actualPriceRE` Regex will extract all the $xxx.xx format of prices from the extracted HTML content
     actualPriceRE = new RegExp(
       r"[\+|\-|\$]*[\d\,]*\d+\.\d{1,2}[\%]*",
       caseSensitive: false,
     );
 
+    //Extrecting the specific section of HTML content
     productPriceSectionMatches =
         productPriceSectionRE.firstMatch(response.body);
 
     //print(productPriceSectionMatches.group(0));
 
+    //Matching all the price elements of the extracted HTML content
     priceMatches =
         actualPriceRE.allMatches(productPriceSectionMatches.group(0));
 
@@ -150,8 +155,8 @@ class HttpQuotesServices {
         response = await http
             .get('https://www.bullionbypost.co.uk/gold-price/year/ounces/USD/');
       } else {
-        response = await http
-            .get('https://www.bullionbypost.co.uk/silver-price/year/ounces/USD/');
+        response = await http.get(
+            'https://www.bullionbypost.co.uk/silver-price/year/ounces/USD/');
       }
 
       yrHighPriceSectionRE = new RegExp(
@@ -210,9 +215,9 @@ class HttpQuotesServices {
       //shortTime = tmpShortTime.group(0);
 
       //if (shortTime == null) {
-        DateTime timeNow = new DateTime.now();
-        shortTime = "${timeNow.hour}:${timeNow.minute}"; 
-      //}      
+      DateTime timeNow = new DateTime.now();
+      shortTime = "${timeNow.hour}:${timeNow.minute}";
+      //}
 
       for (Match price in priceMatches) {
         if (i == 0) {
