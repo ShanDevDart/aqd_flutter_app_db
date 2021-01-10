@@ -14,4 +14,4 @@ dev_dependencies:
   aqueduct_test: ^1.0.0
 
 dependency_overrides:
-  postgres: 2.1.1
+  postgres: 2.2.0
