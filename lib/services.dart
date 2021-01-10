@@ -70,8 +70,48 @@ class HttpQuotesServices {
     //The above `productPriceSectionRE` Regex will extract the section of text that we want to parse from the HTML content
 
     if (typeOfProduct == 'BitCoin') {
-      response =
-          await http.get('https://www.investing.com/crypto/bitcoin/btc-usd');
+      response = await http.get('https://finance.yahoo.com/quote/BTC-USD');
+
+      productPriceSectionRE = new RegExp(
+        r'Bitcoin USD[\s\S]+?Volume \(24hr\)\<\/span\>\<\/td\>',
+        caseSensitive: false,
+      );
+    }
+
+    if (typeOfProduct == 'Eth') {
+      response = await http.get('https://finance.yahoo.com/quote/ETH-USD');
+
+      productPriceSectionRE = new RegExp(
+        r'Ethereum USD[\s\S]+?Volume \(24hr\)\<\/span\>\<\/td\>',
+        caseSensitive: false,
+      );
+    }
+
+    if (typeOfProduct == 'Ada') {
+      response = await http.get('https://finance.yahoo.com/quote/ADA-USD');
+
+      productPriceSectionRE = new RegExp(
+        r'Cardano USD[\s\S]+?Volume \(24hr\)\<\/span\>\<\/td\>',
+        caseSensitive: false,
+      );
+    }
+
+    if (typeOfProduct == 'Lnk') {
+      response = await http.get('https://finance.yahoo.com/quote/LINK-USD');
+
+      productPriceSectionRE = new RegExp(
+        r'Chainlink USD[\s\S]+?Volume \(24hr\)\<\/span\>\<\/td\>',
+        caseSensitive: false,
+      );
+    }
+
+    if (typeOfProduct == 'Dot') {
+      response = await http.get('https://finance.yahoo.com/quote/DOT1-USD');
+
+      productPriceSectionRE = new RegExp(
+        r'Polkadot USD[\s\S]+?Volume \(24hr\)\<\/span\>\<\/td\>',
+        caseSensitive: false,
+      );
     }
 
     if (typeOfProduct == 'CrudeOil') {
@@ -218,24 +258,50 @@ class HttpQuotesServices {
       DateTime timeNow = new DateTime.now();
       shortTime = "${timeNow.hour}:${timeNow.minute}";
       //}
-
-      for (Match price in priceMatches) {
-        if (i == 0) {
-          currentPrice = price.group(0);
+      //print("BEGINNING ~~~~~~~~~~~~~~~");
+      if (typeOfProduct == 'CrudeOil' || typeOfProduct == 'USD') {
+        for (Match price in priceMatches) {
+          //print("commodity price match: " + price.group(0));
+          if (i == 0) {
+            currentPrice = price.group(0);
+          }
+          if (i == 1) {
+            changeValue = price.group(0);
+          }
+          if (i == 2) {
+            changePercentage = price.group(0);
+          }
+          if (i == (priceMatches.length - 5)) {
+            lowPrice = price.group(0);
+          }
+          if (i == (priceMatches.length - 4)) {
+            highPrice = price.group(0);
+          }
+          i++;
         }
-        if (i == 1) {
-          changeValue = price.group(0);
+        //print("END ~~~~~~~~~~~~~~~");
+      } else {
+        //print("BEGINNING ~~~~~~~~~~~~~~~");
+        for (Match price in priceMatches) {
+          //print("crypto price match: " + price.group(0));
+          if (i == (priceMatches.length - 115)) {
+            currentPrice = price.group(0);
+          }
+          if (i == (priceMatches.length - 113)) {
+            changeValue = price.group(0);
+          }
+          if (i == (priceMatches.length - 112)) {
+            changePercentage = price.group(0);
+          }
+          if (i == (priceMatches.length - 12)) {
+            lowPrice = price.group(0);
+          }
+          if (i == (priceMatches.length - 13)) {
+            highPrice = price.group(0);
+          }
+          i++;
         }
-        if (i == 2) {
-          changePercentage = price.group(0);
-        }
-        if (i == (priceMatches.length - 2)) {
-          lowPrice = price.group(0);
-        }
-        if (i == (priceMatches.length - 1)) {
-          highPrice = price.group(0);
-        }
-        i++;
+        //print("END ~~~~~~~~~~~~~~~");
       }
 
       priceMap = {

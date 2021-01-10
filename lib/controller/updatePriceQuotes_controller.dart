@@ -11,32 +11,68 @@ class UpdatePriceQuotesController extends ResourceController {
 
   @Operation.get()
   Future<Response> updateAllPrice() async {
-
     ManagedObject managedObjectValues;
     var query;
     List<PMQuotes> pmUpdatedRow;
     List<CommoditiesOthers> cooUpdatedRow;
 
     HttpQuotesServices httpQuotesServices = new HttpQuotesServices();
-    
+
     managedObjectValues = await httpQuotesServices.getMetalPriceValues("Gold");
-    query = Query<PMQuotes>(context) ..values = managedObjectValues ..where((pmq) => pmq.pmtype).equalTo("Gold");
+    query = Query<PMQuotes>(context)
+      ..values = managedObjectValues
+      ..where((pmq) => pmq.pmtype).equalTo("Gold");
     pmUpdatedRow = await query.update();
 
-    managedObjectValues = await httpQuotesServices.getMetalPriceValues("Silver");
-    query = Query<PMQuotes>(context) ..values = managedObjectValues ..where((pmq) => pmq.pmtype).equalTo("Silver");
+    managedObjectValues =
+        await httpQuotesServices.getMetalPriceValues("Silver");
+    query = Query<PMQuotes>(context)
+      ..values = managedObjectValues
+      ..where((pmq) => pmq.pmtype).equalTo("Silver");
     pmUpdatedRow = await query.update();
 
-    managedObjectValues = await httpQuotesServices.getMetalPriceValues("BitCoin");
-    query = Query<CommoditiesOthers>(context) ..values = managedObjectValues ..where((coo) => coo.commoditytype).equalTo("BitCoin");
+    managedObjectValues =
+        await httpQuotesServices.getMetalPriceValues("BitCoin");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("BitCoin");
     cooUpdatedRow = await query.update();
 
-    managedObjectValues = await httpQuotesServices.getMetalPriceValues("CrudeOil");
-    query = Query<CommoditiesOthers>(context) ..values = managedObjectValues ..where((coo) => coo.commoditytype).equalTo("CrudeOil");
+    managedObjectValues = await httpQuotesServices.getMetalPriceValues("Eth");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("Eth");
+    cooUpdatedRow = await query.update();
+
+    managedObjectValues = await httpQuotesServices.getMetalPriceValues("Ada");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("Ada");
+    cooUpdatedRow = await query.update();
+
+    managedObjectValues = await httpQuotesServices.getMetalPriceValues("Lnk");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("Lnk");
+    cooUpdatedRow = await query.update();
+
+    managedObjectValues = await httpQuotesServices.getMetalPriceValues("Dot");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("Dot");
+    cooUpdatedRow = await query.update();
+
+    managedObjectValues =
+        await httpQuotesServices.getMetalPriceValues("CrudeOil");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("CrudeOil");
     cooUpdatedRow = await query.update();
 
     managedObjectValues = await httpQuotesServices.getMetalPriceValues("USD");
-    query = Query<CommoditiesOthers>(context) ..values = managedObjectValues ..where((coo) => coo.commoditytype).equalTo("USD");
+    query = Query<CommoditiesOthers>(context)
+      ..values = managedObjectValues
+      ..where((coo) => coo.commoditytype).equalTo("USD");
     cooUpdatedRow = await query.update();
 
     //Map quoteMap = jsonDecode(priceJSON);
