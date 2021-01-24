@@ -296,7 +296,7 @@ class HttpQuotesServices {
           if (i == (priceMatches.length - 12)) {
             lowPrice = price.group(0);
           }
-          if (i == (priceMatches.length - 13)) {
+          if (i == (priceMatches.length - 11)) {
             highPrice = price.group(0);
           }
           i++;
