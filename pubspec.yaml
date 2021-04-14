@@ -1,6 +1,6 @@
 name: counter
 description: A web server for flutter counter app
-version: 0.0.1
+version: 0.0.2
 author: stable|kernel <jobs@stablekernel.com>
 
 environment:
